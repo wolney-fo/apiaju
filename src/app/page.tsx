@@ -40,7 +40,11 @@ export default function Home() {
                 </a>
               </Button>
               <Button asChild variant="outline" size="lg">
-                <a href="#" target="_blank" rel="noopener noreferrer">
+                <a
+                  href="https://www.postman.com/wolneyfo/apiaju/collection/iduur4f/apiaju?action=share&creator=26431734"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   <ExternalLink className="h-4 w-4 mr-2" />
                   Postman
                 </a>

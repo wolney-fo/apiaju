@@ -31,8 +31,9 @@ export function Footer() {
               </li>
               <li>
                 <a
-                  href="https://stats.uptimerobot.com/"
+                  href="https://stats.uptimerobot.com/haO8gHOOcS/"
                   className="hover:underline"
+                  target="_blank"
                 >
                   Status dos serviços
                 </a>
