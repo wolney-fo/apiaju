@@ -1,0 +1,352 @@
+openapi: 3.0.3
+info:
+  title: ApiAju
+  description: |
+    Uma API pública destinada a oferecer um conjunto de informações relacionadas à cidade de Aracaju-SE.
+
+    Esta API fornece dados sobre calendário, feriados e dias úteis específicos para a cidade de Aracaju, 
+    incluindo feriados nacionais, estaduais (Sergipe) e municipais.
+  version: 1.0.0
+  contact:
+    name: ApiAju
+    url: https://api.aju.br
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.aju.br/api/v1
+    description: Servidor de Produção
+  - url: http://localhost:3000/api/v1
+    description: Servidor de Desenvolvimento
+
+tags:
+  - name: Health
+    description: Endpoints de verificação de saúde da API
+  - name: Calendário
+    description: Endpoints relacionados a calendário, feriados e dias úteis
+
+paths:
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Verificar status da API
+      description: Retorna o status de saúde da API
+      operationId: getHealth
+      responses:
+        "200":
+          description: API funcionando corretamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "System running"
+
+  /calendar/holidays:
+    get:
+      tags:
+        - Calendário
+      summary: Listar feriados de um ano
+      description: |
+        Retorna todos os feriados de um determinado ano, incluindo feriados nacionais, 
+        estaduais (Sergipe) e municipais (Aracaju).
+
+        Se o parâmetro `year` não for informado, retorna os feriados do ano atual.
+      operationId: getHolidays
+      parameters:
+        - name: year
+          in: query
+          description: Ano para consulta dos feriados (entre 1900 e 2199)
+          required: false
+          schema:
+            type: integer
+            minimum: 1900
+            maximum: 2199
+            example: 2024
+      responses:
+        "200":
+          description: Lista de feriados retornada com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Listing the holidays of 2024"
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Holiday"
+              example:
+                message: "Listing the holidays of 2024"
+                data:
+                  - date: "2024-01-01"
+                    name: "Confraternização mundial"
+                    type: "national"
+                  - date: "2024-02-13"
+                    name: "Carnaval"
+                    type: "national"
+                  - date: "2024-03-17"
+                    name: "Aniversário da cidade"
+                    type: "municipal"
+                  - date: "2024-03-29"
+                    name: "Sexta-feira Santa"
+                    type: "national"
+                  - date: "2024-03-31"
+                    name: "Páscoa"
+                    type: "national"
+        "400":
+          description: Parâmetros inválidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                message: "Could not calculated holidays from year"
+                error: "Invalid params"
+        "500":
+          description: Erro interno do servidor
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                message: "Could not calculated holidays from year"
+                error: "Year outside the valid range (1900-2199)"
+
+  /calendar/holidays/is-holiday:
+    get:
+      tags:
+        - Calendário
+      summary: Verificar se uma data é feriado
+      description: |
+        Verifica se uma determinada data é feriado em Aracaju.
+
+        Se o parâmetro `date` não for informado, verifica a data atual.
+      operationId: isHoliday
+      parameters:
+        - name: date
+          in: query
+          description: Data para verificação no formato YYYY-MM-DD
+          required: false
+          schema:
+            type: string
+            format: date
+            pattern: "^(?:(?:[0-9]{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12][0-9]|3[01])|(?:0[469]|11)-(?:0[1-9]|[12][0-9]|30)|02-(?:0[1-9]|1[0-9]|2[0-8])))|(?:(?:[0-9]{2}(?:0[48]|[2468][048]|[13579][26])|(?:[02468][048]00|[13579][26]00))-02-29))$"
+            example: "2024-12-25"
+      responses:
+        "200":
+          description: Verificação realizada com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      date:
+                        type: string
+                        format: date
+                        description: Data verificada
+                      isHoliday:
+                        type: boolean
+                        description: Indica se a data é feriado
+              example:
+                data:
+                  date: "2024-12-25"
+                  isHoliday: true
+        "400":
+          description: Parâmetros inválidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                message: "Could not calculated business days between dates"
+                error: "Invalid params"
+
+  /calendar/business-days:
+    get:
+      tags:
+        - Calendário
+      summary: Calcular dias úteis entre datas
+      description: |
+        Calcula o número de dias úteis entre duas datas, excluindo feriados e fins de semana.
+
+        Por padrão, sábados são considerados dias não úteis. Use o parâmetro `includeSaturdays` 
+        para incluir sábados como dias úteis.
+      operationId: getBusinessDays
+      parameters:
+        - name: startDate
+          in: query
+          description: Data inicial no formato YYYY-MM-DD
+          required: true
+          schema:
+            type: string
+            format: date
+            pattern: "^(?:(?:[0-9]{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12][0-9]|3[01])|(?:0[469]|11)-(?:0[1-9]|[12][0-9]|30)|02-(?:0[1-9]|1[0-9]|2[0-8])))|(?:(?:[0-9]{2}(?:0[48]|[2468][048]|[13579][26])|(?:[02468][048]00|[13579][26]00))-02-29))$"
+            example: "2024-01-01"
+        - name: endDate
+          in: query
+          description: Data final no formato YYYY-MM-DD
+          required: true
+          schema:
+            type: string
+            format: date
+            pattern: "^(?:(?:[0-9]{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12][0-9]|3[01])|(?:0[469]|11)-(?:0[1-9]|[12][0-9]|30)|02-(?:0[1-9]|1[0-9]|2[0-8])))|(?:(?:[0-9]{2}(?:0[48]|[2468][048]|[13579][26])|(?:[02468][048]00|[13579][26]00))-02-29))$"
+            example: "2024-12-31"
+        - name: includeSaturdays
+          in: query
+          description: Incluir sábados como dias úteis
+          required: false
+          schema:
+            type: boolean
+            default: false
+            example: false
+      responses:
+        "200":
+          description: Cálculo realizado com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      businessDays:
+                        type: integer
+                        description: Número de dias úteis entre as datas
+                        minimum: 0
+              example:
+                data:
+                  businessDays: 252
+        "400":
+          description: Parâmetros inválidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                message: "Could not calculated business days between dates"
+                error: "Invalid params"
+
+  /calendar/business-days/end-date:
+    get:
+      tags:
+        - Calendário
+      summary: Calcular data final a partir de dias úteis
+      description: |
+        Calcula a data final somando um número específico de dias úteis a partir de uma data inicial,
+        excluindo feriados e fins de semana.
+
+        Por padrão, sábados são considerados dias não úteis. Use o parâmetro `includeSaturdays` 
+        para incluir sábados como dias úteis.
+      operationId: getEndDate
+      parameters:
+        - name: startDate
+          in: query
+          description: Data inicial no formato YYYY-MM-DD
+          required: true
+          schema:
+            type: string
+            format: date
+            pattern: "^(?:(?:[0-9]{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12][0-9]|3[01])|(?:0[469]|11)-(?:0[1-9]|[12][0-9]|30)|02-(?:0[1-9]|1[0-9]|2[0-8])))|(?:(?:[0-9]{2}(?:0[48]|[2468][048]|[13579][26])|(?:[02468][048]00|[13579][26]00))-02-29))$"
+            example: "2024-01-01"
+        - name: workingDays
+          in: query
+          description: Número de dias úteis a adicionar
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            example: 30
+        - name: includeSaturdays
+          in: query
+          description: Incluir sábados como dias úteis
+          required: false
+          schema:
+            type: boolean
+            default: false
+            example: false
+      responses:
+        "200":
+          description: Cálculo realizado com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      endDate:
+                        type: string
+                        format: date
+                        description: Data final calculada
+              example:
+                data:
+                  endDate: "2024-02-13"
+        "400":
+          description: Parâmetros inválidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                message: "Could not calculated business days between dates"
+                error: "Invalid params"
+
+components:
+  schemas:
+    Holiday:
+      type: object
+      description: Representa um feriado
+      properties:
+        date:
+          type: string
+          format: date
+          description: Data do feriado no formato YYYY-MM-DD
+          example: "2024-12-25"
+        name:
+          type: string
+          description: Nome do feriado
+          example: "Natal"
+        type:
+          type: string
+          enum:
+            - national
+            - state
+            - municipal
+          description: |
+            Tipo do feriado:
+            - `national`: Feriado nacional (válido em todo o Brasil)
+            - `state`: Feriado estadual (válido em Sergipe)
+            - `municipal`: Feriado municipal (válido em Aracaju)
+          example: "national"
+      required:
+        - date
+        - name
+        - type
+
+    Error:
+      type: object
+      description: Representa um erro retornado pela API
+      properties:
+        message:
+          type: string
+          description: Mensagem descritiva do erro
+          example: "Could not calculated holidays from year"
+        error:
+          type: string
+          description: Detalhes técnicos do erro
+          example: "Invalid params"
+      required:
+        - message
+        - error
