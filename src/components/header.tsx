@@ -1,5 +1,6 @@
-import { Github } from "lucide-react";
+import { Github, ShapesIcon } from "lucide-react";
 import { Button } from "./ui/button";
+import Link from "next/link";
 
 export function Header() {
   return (
@@ -10,6 +11,13 @@ export function Header() {
             <span className="text-xl font-bold text-foreground">ApiAju</span>
           </div>
           <div className="flex items-center space-x-4">
+            <Button asChild variant="ghost" size="sm">
+              <Link href="/playground" rel="noopener noreferrer">
+                <ShapesIcon className="h-4 w-4 mr-2" />
+                Playground
+              </Link>
+            </Button>
+
             <Button asChild variant="ghost" size="sm">
               <a
                 href="https://github.com/wolney-fo/apiaju"

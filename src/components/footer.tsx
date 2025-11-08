@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export function Footer() {
   const currentYear = new Date().getFullYear();
 
@@ -38,6 +40,11 @@ export function Footer() {
                   Status dos serviços
                 </a>
               </li>
+              <li>
+                <Link href="/playground" className="hover:underline">
+                  Playground
+                </Link>
+              </li>
             </ul>
           </div>
           <div>
@@ -52,7 +59,7 @@ export function Footer() {
         <div className="space-y-2 border-t border-muted mt-8 pt-8 text-center text-muted-foreground">
           <p>{currentYear} &copy; ApiAju. Todos os direitos reservados.</p>{" "}
           <p>
-            Feito por{" "}
+            Desenvolvido por{" "}
             <a
               href="https://www.wolney.dev"
               target="_blank"
